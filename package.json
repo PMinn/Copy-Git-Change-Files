@@ -1,0 +1,22 @@
+{
+    "name": "copy-git-change-file",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "dev": "npx tailwindcss -i ./src/tailwindcss.css  -o ./src/static/css/init.css --watch",
+        "build": "npx tailwindcss -i ./src/tailwindcss.css  -o ./src/static/css/init.css"
+    },
+    "author": "P'min",
+    "license": "ISC",
+    "dependencies": {
+        "archiver": "^7.0.1",
+        "body-parser": "^1.20.2",
+        "ejs-locals": "^1.0.2",
+        "express": "^4.19.2",
+        "socket.io": "^4.7.5"
+    },
+    "devDependencies": {
+        "tailwindcss": "^3.4.4"
+    }
+}
