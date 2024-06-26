@@ -30,22 +30,13 @@ app.get('/', (req, res) => {
 
 app.post('/panel', async (req, res) => {
     let { path } = req.body;
-    if (!fs.existsSync(path)) {
-        res.render('error', { message: `此路徑(${path})不存在` });
+    var checkResult = await checkPath(path);
+    if (checkResult.error) {
+        res.render('error', { message: checkResult.error });
         return;
     }
-    try {
-        var execResult = await exec('git rev-parse --show-toplevel', { cwd: path });
-        if (execResult.stderr) {
-            res.render('error', { message: execResult.stderr });
-            return;
-        }
-        path = execResult.stdout.trim().replace(/\n/g, '');
-    } catch {
-        res.render('error', { message: `此路徑(${path})不是 git 專案` });
-        return;
-    }
-    res.render('panel', { path });
+    path = checkResult.path;
+    res.render('panel', { path, source: "commits" });
 })
 
 app.post('/log', async (req, res) => {
@@ -64,17 +55,48 @@ app.post('/log', async (req, res) => {
 })
 
 app.post('/copy', async (req, res) => {
-    let { path, commit0, commit1 } = req.body;
-
-    const diff = await exec(`git diff-tree --encoding=UTF-8 -r --no-commit-id --name-status --text --diff-filter=ACDMRT ${commit0} ${commit1}`, { cwd: path });
-    if (diff.stderr) {
-        res.render('error', { message: diff.stderr });
-        return;
+    let { path, source } = req.body;
+    if (source == "commits") {
+        let { commit0, commit1 } = req.body;
+        const diff = await exec(`git diff-tree --encoding=UTF-8 -r --no-commit-id --name-status --text --diff-filter=ACDMRT ${commit0} ${commit1}`, { cwd: path });
+        if (diff.stderr) {
+            res.render('error', { message: diff.stderr });
+            return;
+        }
+        const files = diff.stdout.split('\n').filter(line => line.length > 0).map(line => {
+            return {
+                status: line[0],
+                file: line.split('\t')[1]
+            }
+        })
+        res.render('copy', { path, files });
+    } else if (source == "changes") {
+        var checkResult = await checkPath(path);
+        if (checkResult.error) {
+            res.render('error', { message: checkResult.error });
+            return;
+        }
+        path = checkResult.path;
+        const diff = await exec('git status --short', { cwd: path });
+        if (diff.stderr) {
+            res.render('error', { message: diff.stderr });
+            return;
+        }
+        const files = diff.stdout.split('\n').filter(line => line.length > 0).map(line => {
+            return {
+                status: line.substring(0, 2),
+                file: line.substring(3)
+            }
+        })
+        res.render('copy', { path, files });
+    } else {
+        res.render('error', { message: `未知的來源：${source}` });
     }
+})
 
-    const files = diffToChanges(diff.stdout);
-
-    res.render('copy', { path, files });
+app.post('/done', (req, res) => {
+    let { path, bytes, id } = req.body;
+    res.render('done', { path, KB: Math.ceil(bytes / 1024), id });
 })
 
 io.on('connection', (socket) => {
@@ -108,7 +130,12 @@ io.on('connection', (socket) => {
 
         archive.finalize();
     });
-});
+})
+
+app.get('/openCache', (req, res) => {
+    exec(`start "" "${__dirname}/static/output"`);
+    res.json({});
+})
 
 server.listen(port, () => {
     console.log(`伺服器啟動： http://localhost:${port}`);
@@ -130,11 +157,22 @@ async function makeSureFileExisted(path_way) {
     })
 }
 
-function diffToChanges(diff) {
-    return diff.split('\n').filter(line => line.length > 0).map(line => {
-        return {
-            status: line[0],
-            file: line.split('\t')[1]
+async function checkPath(path) {
+    try {
+        const statsObj = fs.statSync(path);
+        if (statsObj.isFile()) {
+            path = path.substring(0, path.lastIndexOf('/'));
+        } else if (!statsObj.isDirectory()) {
+            return { error: `此路徑 (${path}) 不存在` };
         }
-    });
+    } catch {
+        return { error: `此路徑 (${path}) 不存在` };
+    }
+    try {
+        var execResult = await exec('git rev-parse --show-toplevel', { cwd: path });
+        if (execResult.stderr) return { error: execResult.stderr };
+        return { path: execResult.stdout.trim().replace(/\n/g, '') };
+    } catch {
+        return { error: `此路徑 (${path}) 不是 git 專案` };
+    }
 }

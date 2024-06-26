@@ -1,0 +1,50 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>完成複製 - CGCF</title>
+    <link rel="stylesheet" href="/static/css/init.css">
+</head>
+
+<body>
+    <div class="w-full max-w-[900px] mx-auto h-svh py-5">
+        <div class="w-full bg-green-100 border border-green-200 rounded-full px-4 py-2 flex gap-2">
+            <svg class="text-green-600" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                viewBox="0 0 256 256">
+                <path
+                    d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z">
+                </path>
+            </svg>
+            <span>完成複製，<%= id %>.change.zip (<%= KB %> KB)</span>
+        </div>
+        <div class="flex justify-center gap-5">
+            <div id="openCache"
+                class="bg-gray-100 hover:bg-gray-50 border text-black rounded-full px-4 h-10 mt-5 inline-flex justify-center items-center cursor-pointer">
+                開啟暫存區
+            </div>
+            <div id="saveAs"
+                class="bg-blue-600 hover:bg-blue-500 border border-transparent text-white rounded-full px-4 h-10 mt-5 inline-flex justify-center items-center cursor-pointer">
+                檔案另存為
+            </div>
+        </div>
+    </div>
+    <script>
+        const id = "<%= id %>";
+        document.getElementById('saveAs').addEventListener('click', function () {
+            const a = document.createElement('a');
+            a.href = `/static/output/${id}.change.zip`;
+            a.download = `${id}.change.zip`;
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        });
+
+        document.getElementById('openCache').addEventListener('click', function () {
+            fetch('openCache');
+        });
+    </script>
+</body>
+
+</html>
