@@ -5,7 +5,8 @@
     "main": "index.js",
     "scripts": {
         "dev": "npx tailwindcss -i ./src/tailwindcss.css  -o ./src/static/css/init.css --watch",
-        "build": "npx tailwindcss -i ./src/tailwindcss.css  -o ./src/static/css/init.css"
+        "build": "npx tailwindcss -i ./src/tailwindcss.css  -o ./src/static/css/init.css --minify",
+        "start": "cd ./src && node index.js"
     },
     "author": "P'min",
     "license": "ISC",
