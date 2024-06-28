@@ -15,6 +15,7 @@ import {
     Button,
     Spinner,
 } from "@nextui-org/react";
+import Head from 'next/head';
 
 export default function Index() {
     const { projectId } = useSystem();
@@ -55,8 +56,21 @@ export default function Index() {
                     setChanges(data.files);
                     setSelectedFileKeys(new Set(data.files.map((change, index) => { change.index = index; return change; }).filter(change => !change.status.includes('D')).map(change => 'fs_' + change.index)));
                 })
+                .catch(() => {
+                    alert('取得修改失敗');
+                });
 
             loadMore([]);
+        } else {
+            setOldProjectId(projectId);
+            setStartCommit(null);
+            setEndCommit(null);
+            setPage(1);
+            setIsLoading(false);
+            setCommits([]);
+            setChangesByCommits([]);
+            setIsCommitsSelected(false);
+            setSelectedFileKeys(new Set())
         }
     }, [projectId])
 
@@ -73,6 +87,9 @@ export default function Index() {
                 setHasMore(data.next);
                 setIsLoading(false);
             })
+            .catch(() => {
+                alert('取得提交失敗');
+            });
     }
 
     function commitsSelected() {
@@ -88,15 +105,21 @@ export default function Index() {
                 setChangesByCommits(data.files);
                 setIsCommitsSelected(true);
             })
+            .catch(() => {
+                alert('取得修改失敗');
+            });
     }
 
     return (
         <div className="w-full h-full flex flex-col">
+            <Head>
+                <title>CGCF</title>
+            </Head>
             <Tabs color="primary" variant="underlined" fullWidth={true}>
-                <Tab key="changes" title="Changes">
+                <Tab key="changes" title="修改">
                     <SelectFiles changes={changes} />
                 </Tab>
-                <Tab className='h-full' key="commits" title="Commits">
+                <Tab className='h-full' key="commits" title="提交">
                     {
                         isCommitsSelected ?
                             <>

@@ -38,7 +38,7 @@ export default async function handler(req, res) {
         zip.addLocalFolder(`./public/${tempPath}`);
         await zip.writeZipPromise(`./public/${tempPath}.change.zip`);
 
-        res.status(200).json({ path: tempPath });
+        res.status(200).json({ filename: `${name}.${timeFlag}.change.zip` });
     } catch (e) {
         console.log(e)
         return res.status(401).json({ error: true, ...e });

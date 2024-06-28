@@ -13,11 +13,20 @@ import {
     Tooltip,
     Button,
     Spinner,
+    Modal,
+    ModalContent,
+    ModalHeader,
+    ModalBody,
+    ModalFooter,
+    useDisclosure
 } from "@nextui-org/react";
 
 export default function SelectFiles({ changes }) {
     const { projectId } = useSystem();
     const [selectedFileKeys, setSelectedFileKeys] = useState(new Set([]));
+    const [buttons, setButtons] = useState(null);
+    const [content, setContent] = useState(null);
+    const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
 
     useEffect(() => {
         setSelectedFileKeys(new Set(changes.map((change, index) => { change.index = index; return change; }).filter(change => !change.status.includes('D')).map(change => 'fs_' + change.index)))
@@ -37,8 +46,28 @@ export default function SelectFiles({ changes }) {
         })
             .then(res => res.json())
             .then(data => {
-                console.log(data);
+                setContent("成功，檔案：" + data.filename);
+                setButtons(<>
+                    <Button color="default" onPress={() => {
+                        fetch('/api/files/openTemp');
+                    }}>開啟暫存區</Button>
+                    <Button color="primary" onPress={() => {
+                        const a = document.createElement('a');
+                        a.href = `/temp/${data.filename}`;
+                        a.download = `${data.filename}`;
+                        a.style.display = 'none';
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                    }}>另存為</Button>
+                </>);
+                onOpen();
             })
+            .catch(() => {
+                setContent("失敗");
+                setButtons(<Button color="default" onPress={onClose}>關閉</Button>);
+                onOpen();
+            });
     }
 
     return (
@@ -72,9 +101,24 @@ export default function SelectFiles({ changes }) {
             {
                 [...selectedFileKeys].length > 0 &&
                 <div className="flex w-full justify-center my-2" >
-                    <Button color='primary'onClick={copy}>開始複製</Button>
+                    <Button color='primary' onClick={copy}>開始複製</Button>
                 </div>
             }
+            <Modal isOpen={isOpen} onOpenChange={onOpenChange} isDismissable={false}>
+                <ModalContent>
+                    {(onClose) => (
+                        <>
+                            <ModalHeader className="flex flex-col gap-1">結果</ModalHeader>
+                            <ModalBody>
+                                {content}
+                            </ModalBody>
+                            <ModalFooter>
+                                {buttons}
+                            </ModalFooter>
+                        </>
+                    )}
+                </ModalContent>
+            </Modal>
         </>
     )
 }

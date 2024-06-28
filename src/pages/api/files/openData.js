@@ -11,7 +11,7 @@ export const config = {
 
 export default async function handler(req, res) {
     try {
-        const dirPath = path.join(__dirname, '../../../../../public/temp');
+        const dirPath = path.join(__dirname, '../../../../../public/data');
         exec(`start "" "${dirPath}"`);
         return res.status(200).json({});
     } catch (e) {

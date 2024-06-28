@@ -14,6 +14,7 @@ import {
     Select,
     SelectItem,
     useDisclosure,
+    DropdownSection
 } from "@nextui-org/react";
 import { useEffect, useState } from 'react';
 
@@ -35,6 +36,10 @@ export default function Layout({ children }) {
                     fetch(`/api/git/setEncode?projectId=${ids[0]}`);
                 }
             })
+            .catch(err => {
+                console.error(err);
+                alert('取得專案列表失敗');
+            })
     }, [])
 
     function addProject() {
@@ -50,9 +55,17 @@ export default function Layout({ children }) {
         })
             .then(res => res.json())
             .then(data => {
+                if (data.error) {
+                    alert("失敗");
+                    return;
+                }
                 setProjects(data.projects);
                 setProjectId(data.id);
                 fetch(`/api/git/setEncode?projectId=${data.id}`);
+            })
+            .catch(err => {
+                console.error(err);
+                alert('新增專案失敗');
             })
     }
 
@@ -66,6 +79,63 @@ export default function Layout({ children }) {
                         </DropdownTrigger>
                         <DropdownMenu>
                             <DropdownItem key="new" onPress={onOpen}>新增專案</DropdownItem>
+                            <DropdownItem key="remove" onPress={() => {
+                                var isRemove = confirm('確定要移除專案？');
+                                if (isRemove) {
+                                    fetch('/api/project/remove', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify({
+                                            projectId
+                                        })
+                                    })
+                                        .then(res => res.json())
+                                        .then(data => {
+                                            if (data.error) {
+                                                alert("失敗");
+                                                return;
+                                            }
+                                            setProjects(data.projects);
+                                            const ids = Object.keys(data.projects);
+                                            if (ids.length > 0) {
+                                                setProjectId(ids[0]);
+                                                fetch(`/api/git/setEncode?projectId=${ids[0]}`);
+                                            } else {
+                                                setProjectId(null);
+                                            }
+                                        })
+                                        .catch(err => {
+                                            console.error(err);
+                                            alert('移除專案失敗');
+                                        })
+                                }
+                            }}>移除當前專案</DropdownItem>
+                        </DropdownMenu>
+                    </Dropdown>
+                    <Dropdown>
+                        <DropdownTrigger>
+                            <Button variant="light" radius='none'>檢視</Button>
+                        </DropdownTrigger>
+                        <DropdownMenu>
+                            <DropdownSection showDivider>
+                                <DropdownItem key="fullScreen" onPress={() => {
+                                    if (!document.fullscreenElement) {
+                                        document.documentElement.requestFullscreen();
+                                    } else if (document.exitFullscreen) {
+                                        document.exitFullscreen();
+                                    }
+                                }}>開啟/關閉全螢幕</DropdownItem>
+                            </DropdownSection>
+                            <DropdownSection>
+                                <DropdownItem key="openTemp" onPress={() => {
+                                    fetch('/api/files/openData')
+                                }}>開啟專案設定檔</DropdownItem>
+                                <DropdownItem key="openTemp" onPress={() => {
+                                    fetch('/api/files/openTemp')
+                                }}>開啟暫存區</DropdownItem>
+                            </DropdownSection>
                         </DropdownMenu>
                     </Dropdown>
                 </div>

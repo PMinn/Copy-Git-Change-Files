@@ -1,7 +1,3 @@
 @echo off
 
-start http://localhost:60625
-
-cd ./src
-
-node ./index.js
+npm run dev
