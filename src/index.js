@@ -77,7 +77,7 @@ app.post('/copy', async (req, res) => {
             return;
         }
         path = checkResult.path;
-        const diff = await exec('git status --short', { cwd: path });
+        const diff = await exec('git status --short -uall', { cwd: path });
         if (diff.stderr) {
             res.render('error', { message: diff.stderr });
             return;
